@@ -1,8 +1,8 @@
 /*
-    Grappling hook by bes#4339
-
-    Thanks to msc and whole amazing wf community
-*/
+ *  Grappling hook by bes#4339
+ * 
+ *    Thanks to msc and whole amazing wf community
+ */
 Hook[] Hookers( maxClients );
 
 Cvar hook_enabled( "hook_enabled", "1", 0 );
