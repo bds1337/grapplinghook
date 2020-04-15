@@ -794,6 +794,23 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
 
             return false;
         }
+        if ( votename == "hook_insta" )
+        {
+            String voteArg = argsString.getToken( 1 );
+            if ( voteArg.len() < 1 )
+            {
+                client.printMessage( "Callvote " + votename + " requires at least one argument\n" );
+                return false;
+            }
+
+            int value = voteArg.toInt();
+            if ( value >= 0 )
+            {
+                return true;
+            }
+
+            return false;
+        }
 
         client.printMessage( "Unknown callvote " + votename + "\n" );
         return false;
@@ -804,23 +821,26 @@ bool GT_Command( Client @client, const String &cmdString, const String &argsStri
         String knockback_arg = "g_knockback_scale ";
         String hook_arg = "hook_enabled ";
         String hook_limit_arg = "hook_limit ";
+        String hook_insta_arg = "hook_insta ";
         if ( votename == "knockback" )
         {
-            //autoTag = argsString.getToken( 1 ).toInt();
             knockback_arg += argsString.getToken( 1 ).toInt();
             G_CmdExecute (knockback_arg);
         }
         if ( votename == "hook_enabled" )
         {
-            //autoTag = argsString.getToken( 1 ).toInt();
             hook_arg += argsString.getToken( 1 ).toInt();
             G_CmdExecute (hook_arg);
         }
         if ( votename == "hook_limit" )
         {
-            //autoTag = argsString.getToken( 1 ).toInt();
             hook_limit_arg += argsString.getToken( 1 ).toInt();
             G_CmdExecute (hook_limit_arg);
+        }
+        if ( votename == "hook_insta" )
+        {
+            hook_insta_arg += argsString.getToken( 1 ).toInt();
+            G_CmdExecute (hook_insta_arg);
         }
     }
 
@@ -1251,6 +1271,7 @@ void GT_InitGametype()
                  + "set rdm_debug \"0\"\n"
                  + "set hook_enabled \"1\"\n"
                  + "set hook_limit \"1\"\n"
+                 + "set hook_insta \"1\"\n"
                  + "\necho \"" + gametype.name + ".cfg executed\"\n";
 
         G_WriteFile( "configs/server/gametypes/" + gametype.name + ".cfg", config );
@@ -1323,6 +1344,8 @@ void GT_InitGametype()
     G_RegisterCallvote( "knockback", "<0-5>", "integer", "Knockback scale" );
     G_RegisterCallvote( "hook_enabled", "<1 or 0>", "bool", "Enables or disables grappling hook usage" );
     G_RegisterCallvote( "hook_limit", "<1 or 0>", "bool", "Enables or disables grappling hook speed limit" );
+    G_RegisterCallvote( "hook_insta", "<1 or 0>", "bool", "Enables or disables grappling hook instantly pulls player" );
+
 
     for ( int i = 0; i < maxClients; i++ )
     {

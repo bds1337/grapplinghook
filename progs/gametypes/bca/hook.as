@@ -3,11 +3,18 @@
  * 
  *    Thanks to msc and whole amazing wf community
  */
+
+
 Hook[] Hookers( maxClients );
 
 Cvar hook_enabled( "hook_enabled", "1", 0 );
 Cvar hook_limit( "hook_limit", "1", 0 );
-//Cvar hook_insta( "hook_insta", "1", 0 );
+// Whole code is a MESS right now, i trying make it better
+Cvar hook_insta( "hook_insta", "1", 0 );
+
+const int HOOK_RELEASE = 0;
+const int HOOK_PULLING = 1;
+//const int HOOK_PULLING = 2;
 
 bool isHookEnabled;
 
@@ -26,7 +33,12 @@ class Hook
     bool isActive;
     bool isActivePosition;
 
+    int hookState;
+
     Vec3 hookEndPos;
+    Vec3 hookOrigin;
+
+    Vec3 hookBeamPos;
 
     float hookLength;
 
@@ -79,7 +91,7 @@ class Hook
                 return;
             }
 
-            Vec3 playerFireOrigin;
+            //Vec3 playerFireOrigin;
 
             // Calculate first position and draw (beam)hook
             if ( this.isActivePosition == false )
@@ -88,34 +100,37 @@ class Hook
                 client.pmoveFeatures = client.pmoveFeatures & ~( PMFEAT_CROUCH );
                 
                 // First beam origin set to 20 up
-                playerFireOrigin = client.getEnt().origin + Vec3( 0, 0, 20 );
+                this.hookOrigin = client.getEnt().origin + Vec3( 0, 0, 20 );
 
                 Vec3 player_look;
-                player_look = playerFireOrigin + this.fwdTarget * 10000; // hook lenght limit
+                player_look = this.hookOrigin + this.fwdTarget * 10000; // hook lenght limit
                 
                 // !!!!! DO SOMETHING IF -1
                 Trace tr; // tr.ent: -1 = nothing; 0 = wall; 1 = player
-                tr.doTrace( playerFireOrigin, Vec3(), Vec3(), player_look, 0, MASK_SOLID ); //MASK_SHOT MASK_SOLID
+                tr.doTrace( this.hookOrigin, Vec3(), Vec3(), player_look, 0, MASK_SOLID ); //MASK_SHOT MASK_SOLID
                 
                 this.hookEndPos = tr.get_endPos();
 
-                // Sets beam entity to end pos
-                this.beam.set_origin2( this.hookEndPos );
-
-                this.isActivePosition = true;
-
-                // Unstuck player
-                if (client.getEnt().groundEntity != null) 
-                    client.getEnt().origin = client.getEnt().origin + Vec3( 0, 0, 1);
-
                 // Make a "sound" effect
                 client.getEnt().respawnEffect();
-                //G_PositionedSound( playerFireOrigin, CHAN_AUTO, sndHook, ATTN_DISTANT );
+                //G_PositionedSound( this.hookOrigin, CHAN_AUTO, sndHook, ATTN_DISTANT );
                 
                 //Vec3 _hookLen = this.hookEndPos - client.getEnt().origin;
                 //this.hookLength = _hookLen.length();
 
                 //client.getEnt().moveType = MOVETYPE_FLY;
+                //if (this.hookLength < 0)
+		        //    this.hookLength = (this.hookEndPos - client.getEnt().origin).length();
+                this.isActivePosition = true;
+                this.hookBeamPos = this.hookOrigin;
+                if ( !(hook_insta.boolean) )
+                    this.hookState = HOOK_RELEASE;
+                else
+                {
+                    this.hookState = HOOK_PULLING;
+                    this.beam.set_origin2( this.hookEndPos );
+                }
+                
             }
 
             //DEFINE HOOK SCALE!!!!!!
@@ -127,34 +142,67 @@ class Hook
             dir = this.hookEndPos - client.getEnt().origin;
             float dist = dir.length();
             dir.normalize();
-            
-            //if ( hook_state == HOOK_RELEASE )
-            //TODO: pull rope
 
-            //pull player
+            String debug = "";
+            float newLenght;
 
-            v = client.getEnt().get_velocity();
-
-            
-            if ( dist < 300)
-                v = ( v + dir * hookScale ) * 0.98;
-            else
-                v = v + dir * hookScale;
-            
-            if ( hook_limit.boolean )
+            if ( this.hookState == HOOK_RELEASE )
             {
-                // TODO! allow gain speed while hook (rocketjumping etc)
-                if ( v.length() > 2200 )
+                // TODO: pull rope
+                // Sets beam entity to end pos
+                //this.hookLength = newLenght; // float
+                //this.hookLength = dist;
+                //debug += this.hookLength + "\n";
+                
+                //newLenght = this.hookLength;
+                if ( newLenght < dist )
                 {
-                    
-                    //float _tempvel = v.length();
-                    v.normalize();
-                    v = v * 2200;
+                    this.hookBeamPos = this.hookBeamPos + this.fwdTarget * 40;
+                    newLenght = (this.hookBeamPos - client.getEnt().origin).length();
                 }
-            }
+                //this.hookLength = newLenght;
+                this.beam.set_origin2( this.hookBeamPos );
 
-            client.getEnt().set_velocity( v );
-            
+                // pro debug
+                debug += "dist: " + dist + "\n";
+                debug += "newLenght: " + newLenght + "\n";
+                debug += "hookLength: " + this.hookLength + "\n";
+                //G_PrintMsg( client.getEnt(), debug );
+                if ( newLenght >= dist )
+                {
+                    this.hookState = HOOK_PULLING;
+                    newLenght = 0;
+                    // Unstuck player
+                    if (client.getEnt().groundEntity != null) 
+                        client.getEnt().origin = client.getEnt().origin + Vec3( 0, 0, 1);
+                }
+
+            }
+            if ( this.hookState == HOOK_PULLING )
+            {
+                //pull player
+
+                v = client.getEnt().get_velocity();
+                
+                if ( dist < 300)
+                    v = ( v + dir * hookScale ) * 0.98;
+                else
+                    v = v + dir * hookScale;
+                
+                if ( hook_limit.boolean )
+                {
+                    // TODO! allow gain speed while hook (rocketjumping etc)
+                    if ( v.length() > 2200 )
+                    {
+                        //float _tempvel = v.length();
+                        v.normalize();
+                        v = v * 2200;
+                    }
+                }
+
+                client.getEnt().set_velocity( v );
+                
+            }
             //Drawcd  hook beam
             this.beam.svflags &= ~SVF_NOCLIENT;
             this.beam.set_origin( client.getEnt().origin );
