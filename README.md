@@ -1,5 +1,5 @@
 # Grappling Hook
-bca gametype with grappling hook for warfork/warsow
+Grappling hook for warfork/warsow custom gametypes
 
-bca used some code from rdm gametype (for awards)
-more: https://vminko.org/rdm
+also rdm+hook gametype
+more about rdm: https://vminko.org/rdm
