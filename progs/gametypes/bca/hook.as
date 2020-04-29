@@ -34,6 +34,9 @@ class Hook
     bool isActive;
     int hookState;
 
+    // Sky, wall, player
+    int hookTarget;
+
     Vec3 hookEndPos;
     Vec3 hookOrigin;
 
@@ -45,6 +48,7 @@ class Hook
     {
         this.isActive = false;
         this.hookState = HOOK_IDLE;
+        this.hookTarget = 0;
     }
     ~Hook(){}
     
@@ -96,7 +100,6 @@ class Hook
                 G_PrintMsg( client.getEnt(), "Hook disabled via callvote\n" );
                 return;
             }
-
             // Calculate first position and draw (beam)hook
             if ( this.hookState == HOOK_IDLE )
             {
@@ -109,9 +112,12 @@ class Hook
                 Vec3 player_look;
                 player_look = this.hookOrigin + this.fwdTarget * 10000; // hook lenght limit
                 
+                String test1 = "";
+
                 Trace tr; // tr.ent: -1 = nothing; 0 = wall; 1 = player
-                tr.doTrace( this.hookOrigin, Vec3(), Vec3(), player_look, 0, MASK_SOLID ); //MASK_SHOT MASK_SOLID
+                if (tr.doTrace( this.hookOrigin, Vec3(), Vec3(), player_look, -1, MASK_SHOT )) //MASK_SHOT MASK_SOLID
                 
+                this.hookTarget = tr.surfFlags & SURF_SKY; // = 4 if sky
                 this.hookEndPos = tr.get_endPos();
 
                 // Make a "sound" effect
@@ -158,12 +164,24 @@ class Hook
                 {
                     this.hookState = HOOK_PULLING;
                     newLenght = 0;
+
+                    if (this.hookTarget == 4)
+                    {
+                        this.isActive = false;
+                        return;
+                    }
+
                     PlayerUnstuck();
                 }
 
             }
             if ( this.hookState == HOOK_PULLING )
             {
+                if (this.hookTarget == 4)
+                {
+                    this.isActive = false;
+                    return;
+                }
                 v = client.getEnt().get_velocity();
                 
                 if ( dist < 300)
