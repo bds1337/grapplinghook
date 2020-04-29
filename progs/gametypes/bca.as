@@ -928,17 +928,45 @@ String @GT_ScoreboardMessage( uint maxlen )
 
             if ( gametype.isInstagib )
             {
+                int weap_acc = 0;
+                if ( ent.client.stats.accuracyHits( AMMO_INSTAS ) > 0 )
+                        weap_acc = (float(ent.client.stats.accuracyHits( AMMO_INSTAS ) ) / 
+                            float(ent.client.stats.accuracyShots( AMMO_INSTAS ))) * 100;
                 // "Name Clan Score Ping R"
                 entry = "&p " + playerID + " " + ent.client.clanName + " "
                         + ent.client.stats.score + " " // Best shot
+                        + 1 + " "
+                        + weap_acc + " "
                         + ent.client.ping + " " + ( ent.client.isReady() ? "1" : "0" ) + " ";
             }
             else
-            {
+            {   
+                //need choose best weap for acc
+                int weap_acc, weap_newacc = 0;
+                int counter = AMMO_GUNBLADE;
+                int weap_pic = 1;
+                while ( counter < AMMO_INSTAS )
+                { 
+                    if ( ent.client.stats.accuracyHits( counter ) > 0 )
+                    {
+                        weap_acc = (float(ent.client.stats.accuracyHits( counter ) ) / 
+                            float(ent.client.stats.accuracyShots( counter ))) * 100;
+                        if ( weap_acc > weap_newacc )
+                        {
+                            weap_newacc = weap_acc;
+                            weap_pic =  2*(counter - AMMO_GUNBLADE) + 1;
+                        }
+                    }
+                    counter++;
+                }
                 // "Name Clan Score Frags Ping R"
+                // 1 = GB, 3 = MG, 5 = rg, 7 = NADE 
                 entry = "&p " + playerID + " " + ent.client.clanName + " "
                         + ent.client.stats.score + " " + ent.client.stats.frags + " "
-                        + ent.client.ping + " " + ( ent.client.isReady() ? "1" : "0" ) + " ";
+                        + weap_pic + " "
+                        + weap_newacc + " "
+                        + ent.client.ping + " " 
+                        + ( ent.client.isReady() ? "1" : "0" ) + " ";
             }
 
             if ( scoreboardMessage.len() + entry.len() < maxlen )
@@ -1118,7 +1146,7 @@ void GT_ThinkRules()
     {
         Hookers[i].Update(); 
     }
-    
+
     // print count of players alive and show class icon in the HUD
 
     Team @team;
@@ -1145,7 +1173,16 @@ void GT_ThinkRules()
     for ( int i = 0; i < maxClients; i++ )
     {
         Client @client = @G_GetClient( i );
-
+        /*
+        if ( client.stats.accuracyHits( AMMO_LASERS ) > 0 )
+        {
+            String stuff = "";
+            float laser_acc = float(client.stats.accuracyHits( AMMO_LASERS ) ) / float(client.stats.accuracyShots( AMMO_LASERS ));
+            //stuff += client.stats.accuracyHits( AMMO_LASERS ) + " | " + client.stats.accuracyShots( AMMO_LASERS );
+            stuff += int( laser_acc * 100);
+            G_PrintMsg( client.getEnt(), stuff + "%\n" );
+        }
+        */
         if ( match.getState() >= MATCH_STATE_POSTMATCH || match.getState() < MATCH_STATE_PLAYTIME )
         {
             client.setHUDStat( STAT_MESSAGE_ALPHA, 0 );
@@ -1324,13 +1361,13 @@ void GT_InitGametype()
     // define the scoreboard layout
     if ( gametype.isInstagib )
     {
-        G_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 52 %l 48 %r l1" );
-        G_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Ping R" );
+        G_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 52 %p 18 %i 28 %l 48 %r l1" );
+        G_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Acc . Ping R" );
     }
     else
     {
-        G_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 52 %i 52 %l 48 %r l1" );
-        G_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Frags Ping R" );
+        G_ConfigString( CS_SCB_PLAYERTAB_LAYOUT, "%n 112 %s 52 %i 52 %i 52 %p 18 %i 28 %l 48 %r l1" );
+        G_ConfigString( CS_SCB_PLAYERTAB_TITLES, "Name Clan Score Frags Acc . Ping R" );
     }
 
     // add commands
