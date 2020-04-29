@@ -115,7 +115,7 @@ class Hook
                 String test1 = "";
 
                 Trace tr; // tr.ent: -1 = nothing; 0 = wall; 1 = player
-                if (tr.doTrace( this.hookOrigin, Vec3(), Vec3(), player_look, -1, MASK_SHOT )) //MASK_SHOT MASK_SOLID
+                tr.doTrace( this.hookOrigin, Vec3(), Vec3(), player_look, 0, MASK_SOLID ); //MASK_SHOT MASK_SOLID
                 
                 this.hookTarget = tr.surfFlags & SURF_SKY; // = 4 if sky
                 this.hookEndPos = tr.get_endPos();
