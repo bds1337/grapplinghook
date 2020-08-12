@@ -7,8 +7,7 @@ generic/matchstates.as;
 generic/bots.as;
 generic/awards.as;
 
-bca.as;
-bca/hook.as;
-bca/rdm.as;
+hca.as;
+grapple/hook.as;
 
 legacy/quake1.as;

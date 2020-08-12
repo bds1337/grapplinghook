@@ -1,21 +1,18 @@
 /*
  *  Grappling hook by bes#4339
- * 
- *    Thanks to msc and whole amazing wf community
  */
-
 
 Hook[] Hookers( maxClients );
 
 Cvar hook_enabled( "hook_enabled", "1", 0 );
 Cvar hook_limit( "hook_limit", "1", 0 );
-// Whole code is a MESS right now, i trying make it better
 Cvar hook_insta( "hook_insta", "1", 0 );
 
-const int HOOK_IDLE     = 0; //Not shoot yet
-const int HOOK_FIRE     = 1; //
+const int HOOK_IDLE     = 0;
+
 const int HOOK_RELEASE  = 2;
 const int HOOK_PULLING  = 3;
+const int HOOK_LIMIT_MAX_SPEED  = 2200;
 
 bool isHookEnabled;
 
@@ -66,10 +63,6 @@ class Hook
         this.beam.linkEntity();
     }
 
-    //void HookThink();
-    //void HookFire();
-    //void HookReset();
-
     void PlayerUnstuck()
     {
         if ( @client.getEnt().groundEntity != null ) 
@@ -78,16 +71,15 @@ class Hook
 
     void Update() 
     {
-        // if (make hook votable) 
-        // init hook beam here
         if ( @this.beam == null )
         {
             HookBeamInit();
         }
-
+        
+        // +hook
         if ( this.isActive == true ) 
         {
-            // prevent hook usage while spec
+            // spec's cant use hook
             if ( client.getEnt().isGhosting() )
             {
                 this.isActive = false;
@@ -100,20 +92,18 @@ class Hook
                 G_PrintMsg( client.getEnt(), "Hook disabled via callvote\n" );
                 return;
             }
+            
             // Calculate first position and draw (beam)hook
             if ( this.hookState == HOOK_IDLE )
             {
                 // Disable crounching
                 client.pmoveFeatures = client.pmoveFeatures & ~( PMFEAT_CROUCH );
                 
-                // First beam origin set to 20 up
                 this.hookOrigin = client.getEnt().origin + Vec3( 0, 0, 20 );
 
                 Vec3 player_look;
                 player_look = this.hookOrigin + this.fwdTarget * 10000; // hook lenght limit
                 
-                String test1 = "";
-
                 Trace tr; // tr.ent: -1 = nothing; 0 = wall; 1 = player
                 tr.doTrace( this.hookOrigin, Vec3(), Vec3(), player_look, 0, MASK_SOLID ); //MASK_SHOT MASK_SOLID
                 
@@ -122,7 +112,7 @@ class Hook
 
                 // Make a "sound" effect
                 client.getEnt().respawnEffect();
-                //G_PositionedSound( this.hookOrigin, CHAN_AUTO, sndHook, ATTN_DISTANT );
+                //G_PositionedSound( this.hookOrigin, CHAN_AUTO, sndHook, ATTN_DISTANT ); // lame
                 
                 this.hookBeamPos = this.hookOrigin;
                 
@@ -158,8 +148,6 @@ class Hook
                 this.hookLength = newLenght;
                 this.beam.set_origin2( this.hookBeamPos );
 
-                //G_PrintMsg( client.getEnt(), debug );
-
                 if ( newLenght >= dist )
                 {
                     this.hookState = HOOK_PULLING;
@@ -173,15 +161,16 @@ class Hook
 
                     PlayerUnstuck();
                 }
-
             }
             if ( this.hookState == HOOK_PULLING )
             {
+                // cant hook skybox
                 if (this.hookTarget == 4)
                 {
                     this.isActive = false;
                     return;
                 }
+
                 v = client.getEnt().get_velocity();
                 
                 if ( dist < 300)
@@ -192,10 +181,10 @@ class Hook
                 if ( hook_limit.boolean )
                 {
                     // TODO: allow gain speed while hook_limit (rocketjumping etc)
-                    if ( v.length() > 2200 )
+                    if ( v.length() > HOOK_LIMIT_MAX_SPEED )
                     {
                         v.normalize();
-                        v = v * 2200;
+                        v = v * HOOK_LIMIT_MAX_SPEED;
                     }
                 }
                 client.getEnt().set_velocity( v );
@@ -205,7 +194,7 @@ class Hook
             this.beam.svflags &= ~SVF_NOCLIENT;
             this.beam.set_origin( client.getEnt().origin );
         }
-        else if ( isActive == false )
+        else
         {
             this.beam.svflags |= SVF_NOCLIENT;
             this.hookState = HOOK_IDLE;

@@ -10,7 +10,7 @@ generic/spawnpoints.as;
 generic/awards.as;
 
 rdm.as;
-bca/hook.as;
+grapple/hook.as;
 
 legacy/quake1.as;
 

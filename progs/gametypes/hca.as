@@ -1022,12 +1022,6 @@ void GT_ScoreEvent( Client @client, const String &score_event, const String &arg
         // target, attacker, inflictor
         caRound.playerKilled( G_GetEntity( arg1 ), attacker, G_GetEntity( arg2 ) );
     
-        //rdm fun stuff (only for instagib)
-        if ( gametype.isInstagib )
-        {
-            RDM_playerKilled( G_GetEntity( arg1 ), attacker, G_GetEntity( arg2 ) ); 
-        }
-
 		if ( match.getState() == MATCH_STATE_PLAYTIME )
 		{
 			GT_updateScore( client );
