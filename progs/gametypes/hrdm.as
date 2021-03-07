@@ -553,18 +553,13 @@ void GT_ThinkRules()
     if ( match.getState() >= MATCH_STATE_POSTMATCH )
         return;
 
-    //Hook
-    for ( int i = 0; i < maxClients; i++ )
-    {
-        Hookers[i].Update(); 
-    }
-
     for ( int i = 0; i < maxClients; i++ )
     {
         Entity @ent = @G_GetClient( i ).getEnt();
         if ( ent.client.state() >= CS_SPAWNED && ent.team != TEAM_SPECTATOR )
         {
             rdmVelocities[ ent.playerNum ] = ent.velocity;
+            Hookers[i].Update(); 
         }
     }
 }
@@ -728,6 +723,8 @@ void GT_InitGametype()
         rdmVelocities[ i ] = Vec3( 0 );
         rdmTimes[ i ] = 0;
         isWelcomed[ i ] = true;
+        @Hookers[i].client = @G_GetClient(i);
+        @Hookers[i].player = @G_GetClient(i).getEnt();
     }
 
     // add commands
@@ -739,14 +736,6 @@ void GT_InitGametype()
     G_RegisterCallvote( "hook_enabled", "<1 or 0>", "bool", "Enables or disables grappling hook usage" );
     G_RegisterCallvote( "hook_limit", "<1 or 0>", "bool", "Enables or disables grappling hook speed limit" );
     G_RegisterCallvote( "hook_insta", "<1 or 0>", "bool", "Enables or disables grappling hook instantly pulls player" );
-
-    for ( int i = 0; i < maxClients; i++ )
-    {
-        @Hookers[i].client = @G_GetClient(i);
-        @Hookers[i].player = @G_GetClient(i).getEnt();
-
-        isWelcomed[ i ] = true;
-    }
 
     G_Print( "Gametype '" + gametype.title + "' initialized\n" );
 }

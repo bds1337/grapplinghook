@@ -63,10 +63,17 @@ class Hook
         this.beam.linkEntity();
     }
 
-    void PlayerUnstuck()
+    void PlayerUnstuck( Entity@ hookedPlayer)
     {
-        if ( @client.getEnt().groundEntity != null ) 
-            client.getEnt().origin = client.getEnt().origin + Vec3( 0, 0, 2);
+        if ( @hookedPlayer.groundEntity != null ) 
+        {
+            // hax right here 
+            Entity @ent = @G_SpawnEntity( ":D" );
+            ent.origin = hookedPlayer.origin + Vec3( 0, 0, -20);
+            ent.splashDamage( @ent , 25, 0, 35, 0, MOD_EXPLOSIVE );
+            // destroy splash entity
+            ent.freeEntity();
+        }
     }
 
     void Update() 
@@ -122,7 +129,7 @@ class Hook
                 {
                     this.hookState = HOOK_PULLING;
                     this.beam.set_origin2( this.hookEndPos );
-                    PlayerUnstuck();
+                    PlayerUnstuck( client.getEnt() );
                 }
             }
 
@@ -159,7 +166,7 @@ class Hook
                         return;
                     }
 
-                    PlayerUnstuck();
+                    //PlayerUnstuck();
                 }
             }
             if ( this.hookState == HOOK_PULLING )
